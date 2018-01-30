@@ -137,7 +137,7 @@ shell.on("tick", function() {
       v[0] *= moveSpeed / Math.sqrt(vm)
       v[1] *= moveSpeed / Math.sqrt(vm)
     }
-    // 设置玩家速度(x,y), 只有8个方向的速度
+    // 设置玩家速度(x,y), 只有8个方向的速度. 并触发每帧移动事件。
     players[i-1].setVelocity(v)
     if(shell.press("shoot-" + i)) {
       players[i-1].shoot(shootSpeed)
@@ -148,7 +148,7 @@ shell.on("tick", function() {
 //Render state
 // 渲染状态
 shell.on("render", function(dt) {
-  // 服务器总是用固定的 lpf 函数获取状态并渲染
+  // 服务器总是用固定的 lpf 函数获取状态并渲染, 按服务器时间取状态
   renderState(serverCanvas, server, function(x, y) {
     return server.tickCount
   })
@@ -163,22 +163,27 @@ shell.on("render", function(dt) {
     var tr = tl - 2.0 * remote.lag / tickRate
     // 不同的延迟过滤器，取不同的 lpf 函数
     if(latencyFilter[i] === "Strict") {
+      // Strict 模式下按远端时间取状态
       renderState(playerCanvases[i], players[i], function(x, y) {
         return tr
       })
     } else {
       var remoteP = local.state.getParticle(remote.character, tr)
       if(latencyFilter[i] !== "Optimistic" && remoteP) {
+        // 按本地感知过滤器方式取状态
         var remoteX = remoteP.x
         var localX = local.state.getParticle(local.character, tl).x
+        // XXX 为什么乘 2 ?
         var c = 2 * Math.max(shootSpeed, moveSpeed)
         renderState(playerCanvases[i], players[i], function(x, y) {
           var dx = x - remoteX[0]
           var dy = y - remoteX[1]
           var d = Math.sqrt(dx * dx + dy * dy) / c
+          // 远端玩家处时间为 tr+, 本地玩家处时间为 tl
           return Math.min(tr + d - 1, tl)
         })
       } else {
+        // Optimistic 模式下按本地时间取状态
         renderState(playerCanvases[i], players[i], function(x, y) {
           return tl
         })
