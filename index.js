@@ -1,9 +1,11 @@
 "use strict"
 
+// game-shell 是一个游戏框架，https://github.com/mikolalysenko/game-shell
 var createShell = require("game-shell")
 var createServer = require("./lib/server")
 var renderState = require("./lib/render-state")
 
+// 游戏帧间隔时间 (ms/tick)
 var tickRate = 50
 var moveSpeed = 0.25
 var shootSpeed = 1.0
@@ -12,10 +14,18 @@ var shell = createShell({
   element: "gameContainer",
   tickRate: tickRate 
 })
+
+// 一个服务器对象，2个客户端对象，各自带画布
 var server = createServer(tickRate)
 var players = [null, null]
 var serverCanvas = null
 var playerCanvases = [null, null]
+
+/* Latency filter 延迟过滤:
+    Strict:                  Wait until all inputs collected before drawing
+    Optimistic:              Draw as soon as local input pressed
+    Local perception filter: Warp time depending on distance to remote player
+*/
 var latencyFilter = ["Strict", "Strict"]
 
 var useGL = true
@@ -41,6 +51,7 @@ function makeCanvas(element) {
   return ctx
 }
 
+// 设置延时，变化时重新设置
 function addLagListener(lagElement, player) {
   player.setLag(0.5*lagElement.value|0)
   lagElement.addEventListener("change", function() {
@@ -48,6 +59,7 @@ function addLagListener(lagElement, player) {
   })
 }
 
+// 设置过滤，变化时重新设置
 function addFilterListener(filterElement, player) {
   function updateFilter() {
     latencyFilter[player] = filterElement.value
@@ -56,6 +68,7 @@ function addFilterListener(filterElement, player) {
   updateFilter()
 }
 
+// 初始化
 shell.on("init", function() {
   shell.element.tabindex = 1
   players = [
@@ -124,6 +137,7 @@ shell.on("tick", function() {
       v[0] *= moveSpeed / Math.sqrt(vm)
       v[1] *= moveSpeed / Math.sqrt(vm)
     }
+    // 设置玩家速度(x,y), 只有8个方向的速度
     players[i-1].setVelocity(v)
     if(shell.press("shoot-" + i)) {
       players[i-1].shoot(shootSpeed)
@@ -132,11 +146,15 @@ shell.on("tick", function() {
 })
 
 //Render state
+// 渲染状态
 shell.on("render", function(dt) {
+  // 服务器总是用固定的 lpf 函数获取状态并渲染
   renderState(serverCanvas, server, function(x, y) {
     return server.tickCount
   })
+  // 2个玩家的渲染
   for(var i=0; i<2; ++i) {
+    // 当前玩家(local)和另一玩家(remote)
     var local = players[i]
     var remote = players[i^1]
     var tl = local.localTick()
