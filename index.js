@@ -157,8 +157,11 @@ shell.on("render", function(dt) {
     // 当前玩家(local)和另一玩家(remote)
     var local = players[i]
     var remote = players[i^1]
+    // 本地帧号和远端帧号，远端帧号总是滞后本地帧号，滞后量为对方的Ping值
+    // XXX 为什么滞后量为对方的Ping值，不是对方加本方?
     var tl = local.localTick()
     var tr = tl - 2.0 * remote.lag / tickRate
+    // 不同的延迟过滤器，取不同的 lpf 函数
     if(latencyFilter[i] === "Strict") {
       renderState(playerCanvases[i], players[i], function(x, y) {
         return tr
