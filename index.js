@@ -6,17 +6,17 @@ var createServer = require("./lib/server")
 var renderState = require("./lib/render-state")
 
 // 游戏帧间隔时间 (ms/tick)
-var tickRate = 50
+var tickStep = 50
 var moveSpeed = 0.25
 var shootSpeed = 1.0
 
 var shell = createShell({ 
   element: "gameContainer",
-  tickRate: tickRate 
+  tickStep: tickStep 
 })
 
 // 一个服务器对象，2个客户端对象，各自带画布
-var server = createServer(tickRate)
+var server = createServer(tickStep)
 var players = [null, null]
 var serverCanvas = null
 var playerCanvases = [null, null]
@@ -107,13 +107,13 @@ shell.on("init", function() {
   })
   shootSpeed = +shootInput.value
 
-  var tickInput = document.getElementById("tickRate")
+  var tickInput = document.getElementById("tickStep")
   tickInput.addEventListener("change", function() {
-    server.setTickRate(tickInput.value|0)
-    tickRate = tickInput.value|0
+    server.setTickStep(tickInput.value|0)
+    tickStep = tickInput.value|0
   })
-  server.setTickRate(tickInput.value|0)
-  tickRate = tickInput.value|0
+  server.setTickStep(tickInput.value|0)
+  tickStep = tickInput.value|0
 })
 
 //Handle inputs
@@ -160,7 +160,7 @@ shell.on("render", function(dt) {
     // 本地帧号和远端帧号，远端帧号总是滞后本地帧号，滞后量为对方的Ping值
     // XXX 为什么滞后量为对方的Ping值，不是对方加本方?
     var tl = local.localTick()
-    var tr = tl - 2.0 * remote.lag / tickRate
+    var tr = tl - 2.0 * remote.lag / tickStep
     // 不同的延迟过滤器，取不同的 lpf 函数
     if(latencyFilter[i] === "Strict") {
       // Strict 模式下按远端时间取状态
