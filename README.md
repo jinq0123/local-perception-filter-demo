@@ -23,3 +23,23 @@ A simple demo exploring the concept of local perception filters a means to hide 
 
 .\node_modules\.bin\browserify.cmd .\index.js -d -o .\bundle.js
 
+## 过滤选项说明
+
+本演示的亮点是用一个 lpf() 过滤函数统一了 3 种同步方式：
+
+* Strict: Wait until all inputs collected before drawing
+* Optimistic: Draw as soon as local input pressed
+* Local perception filter: Warp time depending on distance to remote player
+
+说明:
+
+* Strict: 渲染过去的状态, lpf() 返回过去的时间
+* Optimistic: 渲染当前的状态，lpf() 返回当前时间
+* Local perception filter: 自身渲染当前的状态，其他玩家渲染过去的状态，lpf() 按距离返回插值时间
+
+`drawState(context, client, lpf)`中和`lpf`是过滤函数，如：
+```js
+function(x, y) {
+    return server.tickCount
+}
+```
